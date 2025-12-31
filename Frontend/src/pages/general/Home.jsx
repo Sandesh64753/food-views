@@ -38,7 +38,7 @@ const Home = () => {
         };
 
         const response = await axios.get(
-          "http://localhost:3000/api/food",
+          "https://food-views-backend.onrender.com/api/food",
           config
         );
 
