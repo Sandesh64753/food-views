@@ -32,6 +32,9 @@ async function getFoodItems(req, res) {
             const host = req.protocol + '://' + req.get('host')
             obj.video = host + obj.video
         }
+        // alias numeric counts to names the frontend expects
+        obj.likes = obj.likeCount || 0
+        obj.saves = obj.saveCount || 0
         console.log('video url:', obj.video)
         return obj
     })
@@ -96,8 +99,9 @@ async function saveFood(req, res) {
             food: foodId
         })
 
+        // decrement saveCount (was incorrectly decrementing likeCount)
         await foodModel.findByIdAndUpdate(foodId, {
-            $inc: { likeCount: -1 }
+            $inc: { saveCount: -1 }
         })
 
         return res.status(201).json({
@@ -110,6 +114,9 @@ async function saveFood(req, res) {
         food: foodId
     })
 
+    // increment saveCount on the food item
+    await foodModel.findByIdAndUpdate(foodId, { $inc: { saveCount: 1 } })
+
     res.status(201).json({
         message: "food saved successfully",
         save
@@ -120,15 +127,11 @@ async function getSaveFoods(req, res) {
     const user = req.user
 
     const savedFoods = await saveModel.find({ user: user._id }).populate('food')
-
-    if (!savedFoods || savedFoods.length === 0) {
-        return res.status(404).json({ message: "No saved foods found" });
-    }
-
+    // Return empty array if none found (frontend expects an array)
     return res.status(200).json({
         message: "Saved foods retrieved successfully",
-        savedFoods,
-    });
+        savedFoods: savedFoods || [],
+    })
 
 }
 module.exports = {

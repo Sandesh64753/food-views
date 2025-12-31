@@ -12,16 +12,16 @@ const Saved = () => {
   useEffect(() => {
     const fetchSavedFoods = async () => {
       try {
-        const response = await axios.get("https://localhost:3000/api/food/save", {
+        const response = await axios.get("http://localhost:3000/api/food/save", {
           withCredentials: true,
         });
 
-        const savedFoods = response.data.savedFoods.map((item) => ({
+        const savedFoods = (response.data.savedFoods || []).map((item) => ({
           _id: item.food._id,
           video: item.food.video,
           description: item.food.description,
-          likeCount: item.food.likeCount,
-          savesCount: item.food.savesCount,
+          likeCount: item.food.likeCount || 0,
+          saveCount: item.food.saveCount || 0,
           foodPartner: item.food.foodPartner, // include if available
         }));
 
@@ -71,7 +71,7 @@ const Saved = () => {
                       <FaHeart /> <span>{food.likeCount}</span>
                     </div>
                     <div className="action">
-                      <FaBookmark /> <span>{food.savesCount}</span>
+                      <FaBookmark /> <span>{food.saveCount}</span>
                     </div>
                   </div>
                 </div>

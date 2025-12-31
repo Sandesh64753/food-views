@@ -30,6 +30,11 @@ const UserRegister = () => {
       })
       alert('User registered successfully!')
       console.log(response.data)
+      // If backend returned a token, save it and set Authorization header so user is authenticated
+      if (response?.data?.token) {
+        localStorage.setItem('token', response.data.token)
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
+      }
       navigate("/")
     } catch (error) {
       console.error('Registration error:', error)

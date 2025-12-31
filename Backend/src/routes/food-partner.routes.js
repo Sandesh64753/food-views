@@ -1,11 +1,11 @@
 const express = require("express")
-const { authFoodPartnerMiddleware, authUserMiddleware } = require("../middlewares/auth.middleware")
+const { authFoodPartnerMiddleware, authUserMiddleware, authUserOrPartnerMiddleware } = require("../middlewares/auth.middleware")
 const foodPartnerController = require("../controllers/food-partner.controller")
 const router = express.Router()
 
 /* /api/food-partner/:id */
 router.get("/:id",
-    authUserMiddleware,
+    authUserOrPartnerMiddleware,
     foodPartnerController.getFoodPartnerById
 )
 

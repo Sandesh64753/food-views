@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 
 const PartnerLogin = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const params = new URLSearchParams(location.search)
+  const redirectTo = params.get('redirect') || '/'
 
   // State for login inputs
   const [formData, setFormData] = useState({
@@ -32,8 +35,8 @@ const PartnerLogin = () => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
       }
 
-      alert('Partner login successful!')
-      navigate('/create-food') // redirect after login
+  alert('Partner login successful!')
+  navigate(redirectTo) // redirect to requested page after login
     } catch (error) {
       console.error('Login error:', error)
       alert('Invalid credentials, please try again.')
@@ -54,10 +57,10 @@ const PartnerLogin = () => {
         <form className="auth-form" onSubmit={handleSubmit}>
           <li>
             <label htmlFor="email">Business email</label>
-            <input 
-              id="email" 
-              type="email" 
-              className="auth-input" 
+            <input
+              id="email"
+              type="email"
+              className="auth-input"
               placeholder="partner@business.com"
               value={formData.email}
               onChange={handleChange}
@@ -66,10 +69,10 @@ const PartnerLogin = () => {
           </li>
           <li>
             <label htmlFor="password">Password</label>
-            <input 
-              id="password" 
-              type="password" 
-              className="auth-input" 
+            <input
+              id="password"
+              type="password"
+              className="auth-input"
               placeholder="Your password"
               value={formData.password}
               onChange={handleChange}
@@ -83,7 +86,7 @@ const PartnerLogin = () => {
             </div>
           </li>
           <li>
-            <div style={{display:'flex',justifyContent:'space-between',gap:12,marginTop:8}}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
               <Link to="/food-partner/register" className="muted-link">Register as food partner</Link>
               <Link to="/user/login" className="muted-link">User login</Link>
             </div>

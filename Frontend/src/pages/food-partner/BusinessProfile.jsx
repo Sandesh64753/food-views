@@ -1,23 +1,45 @@
 import { React, useState, useEffect } from 'react'
 import '../../styles/BusinessProfile.css'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 const BusinessProfile = () => {
   const { id } = useParams()
   const [profile, setprofile] = useState(null)
   const [videos, setvideos] = useState([])
+  const navigate = useNavigate()
 
   useEffect(() => {
-    axios.get(`http://localhost:3000/api/food-partner/${id}`, {
-      withCredentials: true
-    }).then(response => {
-      setprofile(response.data.foodPartner)
-      setvideos(response.data.foodPartner.foodItems)
-    }).catch(err => {
-      console.error(err.response?.data || err.message)
-    })
-  }, [id])
+    // If there's no stored token (user or partner), redirect to login and include return path
+    const storedToken = localStorage.getItem('token') || localStorage.getItem('partnerToken')
+    const partnerPath = `/food-partner/${id}`
+    if (!storedToken) {
+      const redirect = encodeURIComponent(partnerPath)
+      return navigate(`/user/login?redirect=${redirect}`)
+    }
+
+    // Fetch profile with credentials and Authorization header (axios.defaults may also contain it)
+    const config = {
+      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${storedToken}`
+      }
+    }
+
+    axios.get(`http://localhost:3000/api/food-partner/${id}`, config)
+      .then(response => {
+        setprofile(response.data.foodPartner)
+        setvideos(response.data.foodPartner.foodItems)
+      }).catch(err => {
+        // If backend returns 401 (not authenticated), redirect to login with return path
+        const status = err.response?.status
+        console.error(err.response?.data || err.message)
+        if (status === 401) {
+          const redirect = encodeURIComponent(partnerPath)
+          return navigate(`/user/login?redirect=${redirect}`)
+        }
+      })
+  }, [id, navigate])
 
   return (
     <main className="profile-container" role="main">

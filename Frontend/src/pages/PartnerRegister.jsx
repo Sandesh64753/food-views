@@ -40,7 +40,13 @@ const PartnerRegister = () => {
       alert('Partner registered successfully!')
       console.log(response.data)
 
-      // Redirect to partner login
+      // If backend returned token, save it and set Authorization header
+      if (response?.data?.token) {
+        localStorage.setItem('partnerToken', response.data.token)
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
+      }
+
+      // Redirect to partner create-food page
       navigate('/create-food')
     } catch (error) {
       console.error('Registration error:', error)

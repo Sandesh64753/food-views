@@ -12,8 +12,8 @@ const upload = multer({
 router.post("/", authMiddleware.authFoodPartnerMiddleware, upload.single("video"), foodController.createFood)
 
 /* GET /api/food */
-// Require logged-in user to access home feed
-router.get('/', authMiddleware.authUserMiddleware, foodController.getFoodItems)
+// Public endpoint to fetch food items
+router.get('/', foodController.getFoodItems)
 
 router.post('/like', authMiddleware.authUserMiddleware, foodController.likeFood)
 

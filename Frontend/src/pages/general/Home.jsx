@@ -14,35 +14,98 @@ const Home = () => {
   const [foods, setFoods] = useState([]);
   const videoRefs = useRef(new Map());
   const navigate = useNavigate();
+  // quick check for partner login (used to show ADD button)
+  const [partnerToken, setPartnerToken] = useState(
+    localStorage.getItem("partnerToken")
+  );
+  const [userToken, setUserToken] = useState(localStorage.getItem("token"));
 
+  // 🔐 AUTH CHECK (Redirect if not logged in)
+  // Home is public. Partner profiles are gated when requested.
+  // (Removed automatic redirect to login so Home is viewable by guests.)
+
+  // 🍔 FETCH FOOD ITEMS
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
         const token =
-          localStorage.getItem("token") || localStorage.getItem("partnerToken");
-        const config = { withCredentials: true };
-        if (token) config.headers = { Authorization: `Bearer ${token}` };
+          localStorage.getItem("token") ||
+          localStorage.getItem("partnerToken");
+
+        const config = {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        };
+
         const response = await axios.get(
           "http://localhost:3000/api/food",
           config
         );
+
         setFoods(response.data.foodItems || []);
       } catch (err) {
         console.error("Error fetching food items:", err);
       }
     };
+
     fetchFoodItems();
   }, []);
 
-  // --- Like function ---
+  // Keep partnerToken reactive across tabs/windows and when login sets it
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "partnerToken") setPartnerToken(e.newValue);
+      if (e.key === "token") setUserToken(e.newValue);
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Logout handler visible for both users and partners
+  const handleLogout = async () => {
+    try {
+      // call backend logout to clear httpOnly cookie (if set)
+      if (userToken) {
+        await axios.get("http://localhost:3000/api/auth/user/logout", {
+          withCredentials: true,
+        });
+      }
+      if (partnerToken) {
+        await axios.get("http://localhost:3000/api/auth/foodpartner/logout", {
+          withCredentials: true,
+        });
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+      // proceed to clear local tokens anyway
+    }
+
+    // clear local storage and state
+    localStorage.removeItem("token");
+    localStorage.removeItem("partnerToken");
+    setUserToken(null);
+    setPartnerToken(null);
+    // navigate to home
+    navigate("/");
+  };
+
+  // ❤️ LIKE VIDEO
   async function likeVideo(food) {
+    // require user login before liking
+    const userToken = localStorage.getItem("token")
+    const partnerPath = `/food-partner/${food.foodPartner}`
+    if (!userToken) {
+      const redirect = encodeURIComponent(partnerPath)
+      return navigate(`/user/login?redirect=${redirect}`)
+    }
+
     try {
       const response = await axios.post(
         "http://localhost:3000/api/food/like",
         { foodId: food._id },
-        { withCredentials: true },
-        console.log("successfully liked")
-      );
+        { withCredentials: true }
+      )
 
       setFoods((prev) =>
         prev.map((f) =>
@@ -50,25 +113,34 @@ const Home = () => {
             ? {
                 ...f,
                 isLiked: response.data.like,
-                likes: response.data.like ? f.likes + 1 : f.likes - 1,
+                likes: response.data.like
+                  ? (f.likes || 0) + 1
+                  : (f.likes || 1) - 1,
               }
             : f
         )
-      );
+      )
     } catch (err) {
-      console.error("Error liking video:", err);
+      console.error("Error liking video:", err)
     }
   }
 
-  // --- Save function ---
+  // 🔖 SAVE VIDEO
   async function saveVideo(food) {
+    // require user login before saving
+    const userToken = localStorage.getItem("token")
+    const partnerPath = `/food-partner/${food.foodPartner}`
+    if (!userToken) {
+      const redirect = encodeURIComponent(partnerPath)
+      return navigate(`/user/login?redirect=${redirect}`)
+    }
+
     try {
       const response = await axios.post(
         "http://localhost:3000/api/food/save",
         { foodId: food._id },
-        { withCredentials: true },
-        console.log("video saved")
-      );
+        { withCredentials: true }
+      )
 
       setFoods((prev) =>
         prev.map((f) =>
@@ -76,18 +148,30 @@ const Home = () => {
             ? {
                 ...f,
                 isSaved: response.data.save,
-                saves: response.data.save ? f.saves + 1 : f.saves - 1,
+                saves: response.data.save
+                  ? (f.saves || 0) + 1
+                  : (f.saves || 1) - 1,
               }
             : f
         )
-      );
+      )
     } catch (err) {
-      console.error("Error saving video:", err);
+      console.error("Error saving video:", err)
     }
   }
 
   return (
-    <div className="reels-container">
+    <div style={{ position: "relative" }}>
+      {/* top-right logout button (same styling as visit-btn) */}
+      {(userToken || partnerToken) && (
+        <div style={{ position: "absolute", top: 12, right: 12, zIndex: 1000 }}>
+          <button className="visit-btn" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
+      )}
+
+      <div className="reels-container">
       {foods.map((food) => (
         <section className="reel" key={food._id}>
           <video
@@ -102,21 +186,48 @@ const Home = () => {
 
           {/* Overlay */}
           <div className="reel-overlay">
-            {/* Bottom-left meta */}
             <div className="bottom-meta">
               <p className="description">{food.description}</p>
+
               <div className="bottom-actions">
                 <button
                   className="visit-btn"
-                  onClick={() => navigate(`/food-partner/${food.foodPartner}`)}
+                  onClick={() => {
+                    const token =
+                      localStorage.getItem("token") ||
+                      localStorage.getItem("partnerToken")
+
+                    const partnerPath = `/food-partner/${food.foodPartner}`
+                    if (token) {
+                      navigate(partnerPath)
+                    } else {
+                      // redirect to user login and return to partner page after login
+                      const redirect = encodeURIComponent(partnerPath)
+                      navigate(`/user/login?redirect=${redirect}`)
+                    }
+                  }}
                 >
                   Visit Store
                 </button>
+
+                {/* ADD button for food-partner to go to CreateFood (visible only to partners) */}
+                {partnerToken && (
+                  <button
+                    className="visit-btn"
+                    onClick={() => {
+                      const createPath = `/create-food`
+                      navigate(createPath)
+                    }}
+                  >
+                    ADD
+                  </button>
+                )}
+
                 <div className="like-save">
-                  {/* Like button */}
+                  {/* Like */}
                   <div
-                    onClick={() => likeVideo(food)}
                     className="action"
+                    onClick={() => likeVideo(food)}
                   >
                     {food.isLiked ? (
                       <FaHeart color="red" />
@@ -126,10 +237,10 @@ const Home = () => {
                     <span>{food.likes || 0}</span>
                   </div>
 
-                  {/* Save button */}
+                  {/* Save */}
                   <div
-                    onClick={() => saveVideo(food)}
                     className="action"
+                    onClick={() => saveVideo(food)}
                   >
                     {food.isSaved ? (
                       <FaBookmark color="gold" />
@@ -147,15 +258,16 @@ const Home = () => {
         </section>
       ))}
 
-      {/* Bottom navigation */}
+      {/* Bottom Navigation */}
       <nav className="bottom-nav">
         <button onClick={() => navigate("/")}>
-          <FaHome /> home
+          <FaHome /> Home
         </button>
         <button onClick={() => navigate("/save")}>
-          <FaBookmark /> saved
+          <FaBookmark /> Saved
         </button>
       </nav>
+    </div>
     </div>
   );
 };

@@ -8,9 +8,12 @@ import axios from 'axios'
 // Apply stored token (if any) to axios default headers so protected endpoints receive it
 const storedToken = localStorage.getItem('token') || localStorage.getItem('partnerToken')
 if (storedToken) axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
+// Send credentials (cookies) with requests by default. This helps cookie-based auth in dev.
+axios.defaults.withCredentials = true
 
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <App />
 )
+ 

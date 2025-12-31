@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 
 const UserLogin = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const params = new URLSearchParams(location.search)
+  const redirectTo = params.get('redirect') || '/'
 
   // State for form inputs
   const [formData, setFormData] = useState({
@@ -32,8 +35,8 @@ const UserLogin = () => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
       }
 
-      alert('Login successful!')
-      navigate('/') // redirect user to home
+  alert('Login successful!')
+  navigate(redirectTo)
     } catch (error) {
       console.error('Login error:', error)
       alert('Invalid credentials, please try again.')
@@ -41,7 +44,7 @@ const UserLogin = () => {
   }
 
   return (
-    <div className="auth-shell">
+    <div className="auth-shell text-white">
       <div className="auth-card">
         <header className="auth-header">
           <div>

@@ -26,8 +26,10 @@ async function registerUser(req, res) {
 
     res.cookie("token", token)
 
+    // Return token in response so frontend can store Authorization header for single-origin or CORS setups
     return res.status(201).json({
         message: "User registered successfully",
+        token,
         user: {
             _id: user._id,
             fullname: user.fullname,
@@ -60,6 +62,7 @@ async function loginUser(req, res) {
     res.cookie("token", token)
     return res.status(200).json({
         message: "User logged in successfully",
+        token,
         user: {
             _id: user._id,
             fullname: user.fullname,
@@ -101,6 +104,7 @@ async function registerFoodPartener(req, res) {
 
     return res.status(201).json({
         message: "Food Partner registered successfully",
+        token,
         foodPartner: {
             _id: foodPartner._id,
             name: foodPartner.name,
@@ -133,6 +137,7 @@ async function loginFoodPartner(req, res) {
 
     return res.status(200).json({
         message: "Food Partner logged in successfully",
+        token,
         foodPartner: {
             _id: foodPartner._id,
             name: foodPartner.name,

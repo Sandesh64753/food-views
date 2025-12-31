@@ -6,7 +6,9 @@ function App() {
 
   return (
     <>
-      <AppRoutes />
+      <div className='text-white'>
+        <AppRoutes />
+      </div>
     </>
   )
 }
