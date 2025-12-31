@@ -30,7 +30,7 @@ const PartnerRegister = () => {
     e.preventDefault()
     try {
       const response = await axios.post(
-        'http://localhost:3000/api/auth/foodpartner/register',
+        'https://food-views-backend.onrender.com/api/auth/foodpartner/register',
         {
           ...formData,           // spread all form fields
           name: formData.business // explicitly set name for backend
