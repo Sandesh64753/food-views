@@ -26,7 +26,7 @@ const BusinessProfile = () => {
       }
     }
 
-    axios.get(`http://localhost:3000/api/food-partner/${id}`, config)
+    axios.get(`https://food-views-backend.onrender.com/api/food-partner/${id}`, config)
       .then(response => {
         setprofile(response.data.foodPartner)
         setvideos(response.data.foodPartner.foodItems)
