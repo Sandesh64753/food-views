@@ -25,7 +25,7 @@ const UserRegister = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/user/register', formData,{
+      const response = await axios.post('https://food-views-backend.onrender.com/api/auth/user/register', formData,{
         withCredentials:true
       })
       alert('User registered successfully!')
